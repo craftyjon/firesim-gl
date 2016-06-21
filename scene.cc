@@ -6,6 +6,11 @@ Fixture::Fixture(QJsonObject data)
     strand_id = data.value("strand").toInt();
     address = data.value("address").toInt();
 
+    QJsonArray arr = data.value("pos1").toArray();
+    pos1 = QPoint(arr[0].toInt(), arr[1].toInt());
+    arr = data.value("pos2").toArray();
+    pos2 = QPoint(arr[0].toInt(), arr[1].toInt());
+
     for (quint32 i = 0; i < length; i++) {
         contents.append(RGBColor {0, 0, 0});
     }
@@ -31,6 +36,43 @@ Scene::Scene(const QString &filename)
 {
     _filename = filename;
     _in_update = false;
+
+    _load();
+}
+
+void Scene::_load()
+{
+    QFile sceneFile(_filename);
+
+    if (!sceneFile.open(QIODevice::ReadOnly)) {
+        qCritical("Couldn't open scene file!");
+        return;
+    }
+
+    QByteArray sceneRawData = sceneFile.readAll();
+    _data = QJsonDocument::fromJson(sceneRawData).object();
+
+    if (_data.value("file-type") != "scene") {
+        qCritical("Invalid scene file type!");
+        return;
+    }
+
+    QJsonArray arr = _data.value("center").toArray();
+    _center = QPoint(arr[0].toInt(), arr[1].toInt());
+
+    arr = _data.value("extents").toArray();
+    _extents = QPoint(arr[0].toInt(), arr[1].toInt());
+
+    foreach (const QJsonValue &o, _data.value("strand-settings").toArray()) {
+        quint8 id = o.toObject().value("id").toInt();
+        Strand *s = new Strand(id);
+        _strands.append(s);
+    }
+
+    foreach (const QJsonValue &o, _data.value("fixtures").toArray()) {
+
+    }
+
 }
 
 void Scene::processDatagram(QByteArray datagram)

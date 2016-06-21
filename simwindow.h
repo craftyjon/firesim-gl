@@ -10,6 +10,8 @@
 
 class SimWindow : public QOpenGLWindow
 {
+    Q_OBJECT
+
 public:
     SimWindow(quint16 udpPort);
     ~SimWindow();

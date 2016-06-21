@@ -1,6 +1,6 @@
 #include "simwindow.h"
 
-SimWindow::SimWindow(quint16 udpPort)
+SimWindow::SimWindow(quint16 udpPort) : QOpenGLWindow()
 {
     QSurfaceFormat format;
     format.setRenderableType(QSurfaceFormat::OpenGL);

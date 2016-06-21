@@ -8,8 +8,10 @@
 #include <QPoint>
 #include <QMap>
 #include <QList>
-#include <QColor>
+#include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
+#include <QFile>
 
 
 struct RGBColor
@@ -69,7 +71,7 @@ class Scene : public QObject
     Scene(const QString &filename);
 
     QPoint getCenter() const { return _center; }
-    QPoint getCorner() const { return _corner; }
+    //QPoint getCorner() const { return _corner; }
 
     bool haveStrand(int id) { return id < _strands.size() && _strands[id]; }
     const Strand* getStrand(int id) const { return _strands[id]; }
@@ -81,13 +83,16 @@ class Scene : public QObject
     void processDatagram(QByteArray datagram);
 
   private:
+    void _load(void);
+
     QPoint _center;
-    QPoint _corner;
+    QPoint _extents;    // TODO: kind of wrong. this isn't a point.
     QList<Strand *> _strands;
 
     bool _in_update;
     QString _filename;
     QMap<quint8, QByteArray> _pending_contents;
+    QJsonObject _data;
 };
 
 #endif

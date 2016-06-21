@@ -21,7 +21,14 @@ int main(int argc, char *argv[])
 
     parser.process(app);
 
-    QString scenePath = parser.positionalArguments()[0];
+    QStringList args = parser.positionalArguments();
+
+    if (args.length() < 1) {
+        qCritical("You need to specify a scene file!");
+        exit(1);
+    }
+
+    QString scenePath = args[0];
     quint16 udpPort = parser.value(portOption).toInt();
 
     Scene scene(scenePath);
