@@ -19,7 +19,7 @@ SimWindow::SimWindow(quint16 udpPort, Scene *scene) : QOpenGLWindow()
 
     foreach (Strand *s, _scene->getStrands()) {
         if (s) {
-            _locations.insert(s->id, QList<QPoint>());
+            _locations.insert(s->id, QList<QPointF>());
         }
     }
 
@@ -68,16 +68,16 @@ void SimWindow::resizeGL(int w, int h)
                             (h / 2.0) / std::min(center.y(), extents.y() - center.y()));
 
     // then add this (x,y tuple) to get the coordinates in the right place
-    QPoint translate = QPoint((w / 2) - center.x() * scale,
-                              (h / 2) - center.y() * scale);
+    QPointF translate = QPointF((w / 2.0) - center.x() * scale,
+                                (h / 2.0) - center.y() * scale);
 
     foreach (Strand *s, _scene->getStrands()) {
         if (s) {
             _locations[s->id].clear();
 
-            foreach (QPoint l, s->getAllLocations()) {
-                QPoint lScreen = QPoint(l.x() * scale + translate.x(),
-                                        l.y() * scale + translate.y());
+            foreach (QPointF l, s->getAllLocations()) {
+                QPointF lScreen = QPointF(l.x() * scale + translate.x(),
+                                          l.y() * scale + translate.y());
                 _locations[s->id].append(lScreen);
             }
         }
@@ -88,6 +88,7 @@ void SimWindow::paintGL()
 {
     QPainter painter(this);
 
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(QPen(QColor(0, 0, 0, 0), 0));
     painter.fillRect(0, 0, width(), height(), QColor(0, 0, 0));
 
@@ -102,7 +103,7 @@ void SimWindow::paintGL()
             QList<RGBColor> colors = s->getAllContents();
             for (int i = 0; i < _locations[s->id].length(); i++) {
                 RGBColor c = colors[i];
-                QPointF p = QPointF(_locations[s->id][i]);
+                QPointF p = _locations[s->id][i];
                 painter.setBrush(QColor(c.r, c.g, c.b, 50));
                 painter.drawEllipse(p, 6, 6);
                 painter.setBrush(QColor(c.r, c.g, c.b, 255));

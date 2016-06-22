@@ -30,7 +30,7 @@ class Fixture
   public:
     Fixture(QJsonObject data);
 
-    QList<QPoint> locations();
+    QList<QPointF> locations();
 
     quint32 length;
     quint8 strand_id;
@@ -45,7 +45,7 @@ class Fixture
     QList<RGBColor> contents;
 
   private:
-    QList<QPoint> _locations;
+    QList<QPointF> _locations;
 };
 
 class Strand
@@ -59,7 +59,7 @@ class Strand
     }
     void finalize();
     void update(QByteArray contents);
-    QList<QPoint> getAllLocations();
+    QList<QPointF> getAllLocations();
     QList<RGBColor> getAllContents();
 
     int id;

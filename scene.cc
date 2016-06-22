@@ -23,20 +23,20 @@ Fixture::Fixture(QJsonObject data)
     }
 }
 
-QList<QPoint> Fixture::locations()
+QList<QPointF> Fixture::locations()
 {
     if (_locations.length() == 0) {
         for (quint32 i = 0; i < length; i++) {
-            _locations.append(QPoint(pos1.x() + i * pixel_dx, pos1.y() + i * pixel_dy));
+            _locations.append(QPointF(pos1.x() + i * pixel_dx, pos1.y() + i * pixel_dy));
         }
     }
 
     return _locations;
 }
 
-QList<QPoint> Strand::getAllLocations()
+QList<QPointF> Strand::getAllLocations()
 {
-    QList<QPoint> ret;
+    QList<QPointF> ret;
     foreach (Fixture *f, fixtures) {
         ret.append(f->locations());
     }

@@ -29,7 +29,7 @@ private:
     bool _fullscreen;
     QUdpSocket *_socket;
     Scene *_scene;
-    QMap<quint8, QList<QPoint>> _locations;
+    QMap<quint8, QList<QPointF>> _locations;
 };
 
 #endif // SIMWINDOW_H
