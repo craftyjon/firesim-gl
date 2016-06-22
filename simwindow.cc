@@ -111,8 +111,6 @@ void SimWindow::paintGL()
         }
     }
 
-    update();
-
     /*
 
         for strand_id, strand in self.scene.strands.items():
