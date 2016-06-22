@@ -43,6 +43,9 @@ class Fixture
     double pixel_dy;
 
     QList<RGBColor> contents;
+
+  private:
+    QList<QPoint> _locations;
 };
 
 class Strand
@@ -56,10 +59,13 @@ class Strand
     }
     void finalize();
     void update(QByteArray contents);
+    QList<QPoint> getAllLocations();
+    QList<RGBColor> getAllContents();
+
+    int id;
 
   private:
     bool finalized = false;
-    int id;
     QList<Fixture *> fixtures;
 };
 
@@ -71,10 +77,12 @@ class Scene : public QObject
     Scene(const QString &filename);
 
     QPoint getCenter() const { return _center; }
+    QPoint getExtents() const { return _extents; }
     //QPoint getCorner() const { return _corner; }
 
     bool haveStrand(int id) { return id < _strands.size() && _strands[id]; }
     const Strand* getStrand(int id) const { return _strands[id]; }
+    QList<Strand *> getStrands() const { return _strands; }
 
   signals:
     frameReceived();

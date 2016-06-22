@@ -13,7 +13,7 @@ class SimWindow : public QOpenGLWindow
     Q_OBJECT
 
 public:
-    SimWindow(quint16 udpPort);
+    SimWindow(quint16 udpPort, Scene *scene);
     ~SimWindow();
 
     void keyPressEvent(QKeyEvent *ev);
@@ -29,6 +29,7 @@ private:
     bool _fullscreen;
     QUdpSocket *_socket;
     Scene *_scene;
+    QMap<quint8, QList<QPoint>> _locations;
 };
 
 #endif // SIMWINDOW_H

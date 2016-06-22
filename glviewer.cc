@@ -16,7 +16,9 @@ int main(int argc, char *argv[])
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addPositionalArgument("scene", "Path to scene file");
-    QCommandLineOption portOption = QCommandLineOption(QStringList {"p", "UDP Port"});
+    QCommandLineOption portOption = QCommandLineOption(QStringList {"p", "port"},
+                                                       "UDP port to listen on",
+                                                       "3021");
     parser.addOption(portOption);
 
     parser.process(app);
@@ -33,9 +35,12 @@ int main(int argc, char *argv[])
 
     Scene scene(scenePath);
 
-    SimWindow window(udpPort);
+    SimWindow window(udpPort, &scene);
     window.resize(QSize(800, 600));
     window.show();
+
+    QObject::connect(&scene, SIGNAL(frameReceived()),
+                     &window, SLOT(update()));
 
     return app.exec();
 }

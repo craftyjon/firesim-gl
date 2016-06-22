@@ -1,16 +1,27 @@
+#include <algorithm>
+#include <QPainter>
+#include <QPen>
+#include <QColor>
+
 #include "simwindow.h"
 
-SimWindow::SimWindow(quint16 udpPort) : QOpenGLWindow()
+SimWindow::SimWindow(quint16 udpPort, Scene *scene) : QOpenGLWindow()
 {
     QSurfaceFormat format;
-    format.setRenderableType(QSurfaceFormat::OpenGL);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setVersion(3,3);
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
 
     setFormat(format);
 
     _blur = false;
     _fullscreen = false;
+    _scene = scene;
+
+    foreach (Strand *s, _scene->getStrands()) {
+        if (s) {
+            _locations.insert(s->id, QList<QPoint>());
+        }
+    }
 
     _socket = new QUdpSocket();
     _socket->bind(udpPort);
@@ -49,35 +60,60 @@ void SimWindow::keyPressEvent(QKeyEvent *ev)
 
 void SimWindow::resizeGL(int w, int h)
 {
-    /*
-        center = self.scene.center
-        extents = self.scene.extents
+    QPoint center = _scene->getCenter();
+    QPoint extents = _scene->getExtents();
 
-        # multiply scene coordinates by this to get screen coordinates
-        scale = min((width/2) / min(center[0], extents[0] - center[0]),
-                    (height/2) / min(center[1], extents[1] - center[1]))
+    // multiply scene coordinates by this to get screen coordinates
+    double scale = std::min((w / 2.0) / std::min(center.x(), extents.x() - center.x()),
+                            (h / 2.0) / std::min(center.y(), extents.y() - center.y()));
 
-        # then add this (x,y tuple) to get the coordinates in the right place
-        translate = (width/2 - center[0]*scale, height/2 - center[1]*scale)
+    // then add this (x,y tuple) to get the coordinates in the right place
+    QPoint translate = QPoint((w / 2) - center.x() * scale,
+                              (h / 2) - center.y() * scale);
 
-        for strand_id, strand in self.scene.strands.items():
-            if strand is None: continue
+    foreach (Strand *s, _scene->getStrands()) {
+        if (s) {
+            _locations[s->id].clear();
 
-            self.locations[strand_id] = locs = []
-            for x, y in strand.all_locations:
-                locs.append((x*scale + translate[0], y*scale + translate[1]))
-     */
+            foreach (QPoint l, s->getAllLocations()) {
+                QPoint lScreen = QPoint(l.x() * scale + translate.x(),
+                                        l.y() * scale + translate.y());
+                _locations[s->id].append(lScreen);
+            }
+        }
+    }
 }
 
 void SimWindow::paintGL()
 {
-    /*
-        from PyQt5.QtGui import QBrush, QPen, QColor, QPainter
-        from PyQt5.QtCore import QPointF
+    QPainter painter(this);
 
-        painter = QPainter(self)
-        painter.setPen(QPen(QColor(0, 0, 0, 0), 0))
-        painter.fillRect(0, 0, self.width(), self.height(), QColor(0, 0, 0))
+    painter.setPen(QPen(QColor(0, 0, 0, 0), 0));
+    painter.fillRect(0, 0, width(), height(), QColor(0, 0, 0));
+
+    foreach (Strand *s, _scene->getStrands()) {
+        if (s) {
+            int spacing = _blur ? 4 : 1;
+
+            if (_blur) {
+
+            }
+
+            QList<RGBColor> colors = s->getAllContents();
+            for (int i = 0; i < _locations[s->id].length(); i++) {
+                RGBColor c = colors[i];
+                QPointF p = QPointF(_locations[s->id][i]);
+                painter.setBrush(QColor(c.r, c.g, c.b, 50));
+                painter.drawEllipse(p, 6, 6);
+                painter.setBrush(QColor(c.r, c.g, c.b, 255));
+                painter.drawEllipse(p, 3, 3);
+            }
+        }
+    }
+
+    update();
+
+    /*
 
         for strand_id, strand in self.scene.strands.items():
             if strand is None: continue
@@ -91,18 +127,5 @@ void SimWindow::paintGL()
                     painter.setBrush(QColor(r, g, b, 50))
                     painter.drawEllipse(QPointF(x, y), 16, 16)
 
-            for (x, y), (r, g, b) in instructions:
-                painter.setBrush(QColor(r, g, b, 50))
-                painter.drawEllipse(QPointF(x, y), 6, 6)
-                painter.setBrush(QColor(r, g, b, 255))
-                painter.drawEllipse(QPointF(x, y), 3, 3)
     */
 }
-
-/*
-def process_datagrams(self):
-        while self.socket.hasPendingDatagrams():
-            (datagram, sender, sport) = self.socket.readDatagram(
-                self.socket.pendingDatagramSize())
-            self.scene.process_datagram(datagram)
-*/

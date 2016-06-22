@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "scene.h"
 
 Fixture::Fixture(QJsonObject data)
@@ -11,6 +13,11 @@ Fixture::Fixture(QJsonObject data)
     arr = data.value("pos2").toArray();
     pos2 = QPoint(arr[0].toInt(), arr[1].toInt());
 
+    total_dx = pos2.x() - pos1.x();
+    total_dy = pos2.y() - pos1.y();
+    pixel_dx = total_dx / length;
+    pixel_dy = total_dy / length;
+
     for (quint32 i = 0; i < length; i++) {
         contents.append(RGBColor {0, 0, 0});
     }
@@ -18,18 +25,52 @@ Fixture::Fixture(QJsonObject data)
 
 QList<QPoint> Fixture::locations()
 {
-    QList<QPoint> ret;
-
-    for (quint32 i = 0; i < length; i++) {
-        ret.append(QPoint(pos1.x() + i * pixel_dx, pos1.y() + i * pixel_dy));
+    if (_locations.length() == 0) {
+        for (quint32 i = 0; i < length; i++) {
+            _locations.append(QPoint(pos1.x() + i * pixel_dx, pos1.y() + i * pixel_dy));
+        }
     }
 
+    return _locations;
+}
+
+QList<QPoint> Strand::getAllLocations()
+{
+    QList<QPoint> ret;
+    foreach (Fixture *f, fixtures) {
+        ret.append(f->locations());
+    }
     return ret;
+}
+
+QList<RGBColor> Strand::getAllContents()
+{
+    QList<RGBColor> ret;
+    foreach (Fixture *f, fixtures) {
+        ret.append(f->contents);
+    }
+    return ret;
+}
+
+void Strand::finalize()
+{
+    std::sort(fixtures.begin(), fixtures.end(), [](Fixture *a, Fixture *b) {
+        return a->address < b->address;
+    });
 }
 
 void Strand::update(QByteArray contents)
 {
+    int idx = 0;
 
+    foreach (Fixture *f, fixtures) {
+        for (auto it = f->contents.begin(); it != f->contents.end(); it++) {
+            (*it).r = contents[idx];
+            (*it).g = contents[idx + 1];
+            (*it).b = contents[idx + 2];
+            idx += 3;
+        }
+    }
 }
 
 Scene::Scene(const QString &filename)
@@ -70,9 +111,12 @@ void Scene::_load()
     }
 
     foreach (const QJsonValue &o, _data.value("fixtures").toArray()) {
-
+        quint8 strand_id = o.toObject().value("strand").toInt();
+        if (haveStrand(strand_id)) {
+            Fixture *f = new Fixture(o.toObject());
+            _strands[strand_id]->addFixture(f);
+        }
     }
-
 }
 
 void Scene::processDatagram(QByteArray datagram)
@@ -98,7 +142,7 @@ void Scene::processDatagram(QByteArray datagram)
         if (datagram.length() < 4 || ((datagram.length() - 4) % 3 != 0)) {
             qWarning("Malformed strand update received");
         } else {
-            _pending_contents[datagram[1]] = datagram.right(4);
+            _pending_contents[datagram[1]] = datagram.mid(4);
         }
     }
 }
