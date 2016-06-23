@@ -10,6 +10,7 @@ SimWindow::SimWindow(quint16 udpPort, Scene *scene) : QOpenGLWindow()
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
+    format.setAlphaBufferSize(8);
 
     setFormat(format);
 
@@ -95,15 +96,17 @@ void SimWindow::paintGL()
     foreach (Strand *s, _scene->getStrands()) {
         if (s) {
             int spacing = _blur ? 4 : 1;
-
-            if (_blur) {
-
-            }
-
             QList<RGBColor> colors = s->getAllContents();
-            for (int i = 0; i < _locations[s->id].length(); i++) {
+
+            for (int i = 0; i < _locations[s->id].length(); i += spacing) {
                 RGBColor c = colors[i];
                 QPointF p = _locations[s->id][i];
+
+                if (_blur) {
+                    painter.setBrush(QColor(c.r, c.g, c.b, 50));
+                    painter.drawEllipse(p, 16, 16);
+                }
+
                 painter.setBrush(QColor(c.r, c.g, c.b, 50));
                 painter.drawEllipse(p, 6, 6);
                 painter.setBrush(QColor(c.r, c.g, c.b, 255));
@@ -111,20 +114,4 @@ void SimWindow::paintGL()
             }
         }
     }
-
-    /*
-
-        for strand_id, strand in self.scene.strands.items():
-            if strand is None: continue
-
-            spacing = 4 if self._blur else 1
-            instructions = list(zip(self.locations[strand_id][::spacing],
-                                    strand.all_contents[::spacing]))
-
-            if self._blur:
-                for (x, y), (r, g, b) in instructions:
-                    painter.setBrush(QColor(r, g, b, 50))
-                    painter.drawEllipse(QPointF(x, y), 16, 16)
-
-    */
 }
