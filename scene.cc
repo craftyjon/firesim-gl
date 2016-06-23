@@ -117,6 +117,12 @@ void Scene::_load()
             _strands[strand_id]->addFixture(f);
         }
     }
+
+    foreach (Strand *s, _strands) {
+        if (s) {
+            s->finalize();
+        }
+    }
 }
 
 void Scene::processDatagram(QByteArray datagram)
